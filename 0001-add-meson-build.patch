@@ -1,0 +1,82 @@
+From 4d550cceca007f895c29598bce7793333b5e9ae7 Mon Sep 17 00:00:00 2001
+From: Your Name <your@email.com>
+Date: Thu, 13 Jun 2024 14:30:00 +0000
+Subject: [PATCH] Add meson.build files
+
+---
+ meson.build | 65 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
+ create mode 100644 meson.build
+
+diff --git a/meson.build b/meson.build
+new file mode 100644
+index 0000000..d3f0a1d
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,65 @@
++project('breakpad', 'cpp', 'c',
++  version: '2024.06.1',
++  default_options: [
++    'cpp_std=c++17',
++    'warning_level=2',
++    'buildtype=release',
++  ]
++)
++
++cpp = meson.get_compiler('cpp')
++host_system = host_machine.system()
++
++# Common configuration
++defines = ['HAVE_CONFIG_H']
++includes = include_directories('src')
++sources = [
++  'src/client/minidump_file_writer.cc',
++  'src/common/convert_UTF.c',
++  'src/common/md5.cc',
++  'src/common/string_conversion.cc',
++  'src/common/linux/elfutils.cc',
++  'src/common/linux/file_id.cc',
++  'src/common/linux/guid_creator.cc',
++  'src/common/linux/linux_libc_support.cc',
++  'src/common/linux/memory_mapped_file.cc',
++  'src/common/linux/safe_readlink.cc',
++]
++
++# Platform-specific configuration
++if host_system == 'linux'
++  sources += [
++    'src/client/linux/crash_generation/crash_generation_client.cc',
++    'src/client/linux/handler/exception_handler.cc',
++    'src/client/linux/handler/minidump_descriptor.cc',
++    'src/client/linux/log/log.cc',
++    'src/client/linux/minidump_writer/linux_dumper.cc',
++    'src/client/linux/minidump_writer/minidump_writer.cc',
++  ]
++  dependencies = [
++    cpp.find_library('pthread'),
++    cpp.find_library('dl'),
++    dependency('threads'),
++  ]
++elif host_system == 'windows'
++  # Windows-specific sources
++  sources += [
++    'src/client/windows/crash_generation/client_info.cc',
++    'src/client/windows/crash_generation/crash_generation_server.cc',
++    'src/client/windows/handler/exception_handler.cc',
++  ]
++endif
++
++breakpad_lib = static_library('breakpad',
++  sources,
++  include_directories: includes,
++  dependencies: dependencies,
++  cpp_args: defines,
++  install: true
++)
++
++breakpad_dep = declare_dependency(
++  link_with: breakpad_lib,
++  include_directories: includes,
++)
++-- 
+2.34.1
